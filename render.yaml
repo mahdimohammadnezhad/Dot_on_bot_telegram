@@ -1,0 +1,40 @@
+services:
+  - name: powermatch-bot
+    type: web
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: API_HOST
+        value: "0.0.0.0"
+      - key: USE_WEBHOOK
+        value: "true"
+      # آدرس عمومی همین سرویس روی Render، مثلاً https://powermatch-bot.onrender.com
+      - key: WEBHOOK_BASE_URL
+        sync: false
+      - key: WEBHOOK_SECRET
+        generateValue: true
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: BOT_USERNAME
+        sync: false
+      - key: ADMIN_BOT_TOKEN
+        sync: false
+      - key: ADMIN_BOT_USERNAME
+        sync: false
+      - key: ADMIN_CHAT_IDS
+        sync: false
+      - key: ADMIN_USERNAMES
+        sync: false
+      - key: ADMIN_SECRET
+        generateValue: true
+      - key: GOOGLE_SHEET_ID
+        sync: false
+      # اگر Google Sheets لازم است: در داشبورد Render یک Secret File با همین مسیر بسازید
+      # و محتوای google_credentials.json را در آن بگذارید.
+      - key: GOOGLE_CREDENTIALS_FILE
+        value: /etc/secrets/google_credentials.json
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false

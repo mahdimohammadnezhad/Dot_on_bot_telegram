@@ -37,16 +37,26 @@
 راهنمای کامل در [deploy/README.md](deploy/README.md) — خلاصه: BotFather میزبانی نمی‌کند،
 به یک VPS نیاز دارید. اسکریپت آماده: `bash deploy/setup_server.sh`.
 
-## استقرار بدون سرور (GitHub Actions)
-`.github/workflows/bot.yml` بات را بدون هیچ VPS/سروری، رایگان روی GitHub Actions اجرا
-می‌کند: هر ۵ دقیقه یک اجرای جدید صف می‌شود اما `concurrency` تضمین می‌کند فقط یکی هم‌زمان
-در حال polling باشد؛ هر اجرا تا نزدیک سقف ۶ ساعتی Actions زنده می‌ماند و بعد اجرای بعدی
-از صف ادامه می‌دهد — یعنی بات تقریباً ۲۴/۷ کار می‌کند.
+## استقرار بدون سرور (Render + webhook)
+اجرای مداوم بات به‌صورت long polling روی GitHub Actions عملاً امکان‌پذیر نیست: نگه‌داشتن
+یک پروسه ۲۴/۷ تقریباً کل سهمیه‌ی رایگان دقیقه‌ای Actions روی ریپوی خصوصی را در کمتر از
+یک روز مصرف می‌کند. راه‌حل درست، حذف کامل نیاز به یک پروسه‌ی همیشه‌روشن است: بات را در
+**حالت وب‌هوک** (که از قبل در کد پیاده‌سازی شده — `USE_WEBHOOK`) روی یک سرویس واقعی
+سرورلس اجرا می‌کنیم که فقط وقتی تلگرام آپدیت می‌فرستد بیدار می‌شود.
 
-چون runner بین اجراها پاک می‌شود، فایل SQLite محلی نمی‌تواند دیتابیس اصلی باشد؛ باید
-`TURSO_DATABASE_URL` و `TURSO_AUTH_TOKEN` تنظیم شوند تا `db.py` به‌جای فایل محلی از
-[Turso](https://turso.tech) (سرویس رایگان libSQL) استفاده کند. راه‌اندازی:
+**۱) استقرار روی [Render](https://render.com) (رایگان، بدون کارت اعتباری):**
+فایل `render.yaml` این ریپو یک Blueprint آماده است — در Render روی **New → Blueprint**
+بزنید و این ریپو را انتخاب کنید؛ سرویس با `Dockerfile` موجود ساخته می‌شود. مقادیر
+`sync: false` (مثل `TELEGRAM_BOT_TOKEN`, `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`,
+`WEBHOOK_BASE_URL` — همان `https://<نام-سرویس>.onrender.com`) را در داشبورد پر کنید؛
+`WEBHOOK_SECRET` و `ADMIN_SECRET` خودکار تولید می‌شوند.
 
+اگر Google Sheets لازم است: در داشبورد سرویس → **Environment → Secret Files** یک فایل
+با مسیر `/etc/secrets/google_credentials.json` بسازید و محتوای JSON سرویس‌اکانت را
+در آن بگذارید (`render.yaml` همین مسیر را به `GOOGLE_CREDENTIALS_FILE` داده است).
+
+دیتابیس همچنان روی [Turso](https://turso.tech) است (چون فایل SQLite محلی بین
+ری‌استارت‌های رایگان Render هم پاک می‌شود):
 ```
 turso auth login
 turso db create powermatch
@@ -54,11 +64,13 @@ turso db show powermatch --url
 turso db tokens create powermatch
 ```
 
-سپس در ریپوی گیت‌هاب (خصوصی)، زیر Settings → Secrets and variables → Actions این
-مقادیر را اضافه کنید: `TELEGRAM_BOT_TOKEN`, `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` و
-هر کدام از بقیه‌ی متغیرهای بالا که نیاز دارید (برای Google Sheets، محتوای فایل JSON را
-در سیکرت `GOOGLE_CREDENTIALS_JSON` بگذارید). با `workflow_dispatch` هم می‌توانید بات را
-دستی از تب Actions اجرا کنید.
+**۲) جلوگیری از خواب رفتن سرویس رایگان:** سرویس‌های رایگان Render بعد از ۱۵ دقیقه
+بی‌کاری می‌خوابند و بیدارشدن‌شان چند ده ثانیه طول می‌کشد. `.github/workflows/keepalive.yml`
+هر ۱۰ دقیقه یک درخواست سبک به `/health` می‌زند تا سرویس همیشه بیدار بماند — کاملاً در
+سهمیه‌ی ۷۵۰ ساعت رایگان ماهانه‌ی Render جا می‌شود و چون هر اجرای آن فقط چند ثانیه طول
+می‌کشد، عملاً دقیقه‌ی Actions مصرف نمی‌کند. فقط باید در ریپوی گیت‌هاب، زیر Settings →
+Secrets and variables → Actions، مقدار `RENDER_HEALTH_URL` را برابر
+`https://<نام-سرویس>.onrender.com/health` تنظیم کنید.
 
 ## پنل ادمین — فضای اختصاصی
 پنل مدیریت از فضای کاربری جداست:
