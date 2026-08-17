@@ -1,17 +1,23 @@
 name: Run Telegram bot (no server)
 
 # اجرای مداوم بدون سرور: هر ۵ دقیقه یک اجرای جدید صف می‌شود، اما concurrency
-# با cancel-in-progress: false تضمین می‌کند فقط یک اجرا هم‌زمان در حال polling باشد.
-# هر جاب تا نزدیک سقف زمانی GitHub Actions (۶ ساعت) زنده می‌ماند؛ وقتی تمام شد،
-# اجرای بعدی که در صف منتظر بوده بلافاصله شروع می‌شود و بات را ادامه می‌دهد.
+# تضمین می‌کند فقط یک اجرا هم‌زمان در حال polling باشد. هر جاب تا نزدیک سقف زمانی
+# GitHub Actions (۶ ساعت) زنده می‌ماند؛ وقتی تمام شد، اجرای بعدی که در صف منتظر
+# بوده بلافاصله شروع می‌شود و بات را ادامه می‌دهد.
+#
+# با هر push روی main، اجرای در حال polling (با کد قدیمی) کنسل و بلافاصله با کد
+# تازه ری‌استارت می‌شود (cancel-in-progress فقط برای رویداد push فعال است؛ اجراهای
+# زمان‌بندی‌شده هرگز یکدیگر را کنسل نمی‌کنند تا زنجیره‌ی ۲۴/۷ نشکند).
 on:
+  push:
+    branches: [main]
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch: {}
 
 concurrency:
   group: powermatch-bot
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   run:
