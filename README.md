@@ -31,10 +31,34 @@
 | `ADMIN_CHAT_IDS` | شناسه‌های عددی چت ادمین‌ها |
 | `API_HOST` / `API_PORT` | پیش‌فرض `127.0.0.1:8000` |
 | `GOOGLE_CREDENTIALS_FILE` / `GOOGLE_SHEET_ID` | اختیاری، برای همگام‌سازی گوگل‌شیت |
+| `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` | اختیاری؛ اگر پر شود، دیتابیس به‌جای فایل محلی روی Turso (libSQL) نگه‌داری می‌شود |
 
 ## استقرار روی سرور
 راهنمای کامل در [deploy/README.md](deploy/README.md) — خلاصه: BotFather میزبانی نمی‌کند،
 به یک VPS نیاز دارید. اسکریپت آماده: `bash deploy/setup_server.sh`.
+
+## استقرار بدون سرور (GitHub Actions)
+`.github/workflows/bot.yml` بات را بدون هیچ VPS/سروری، رایگان روی GitHub Actions اجرا
+می‌کند: هر ۵ دقیقه یک اجرای جدید صف می‌شود اما `concurrency` تضمین می‌کند فقط یکی هم‌زمان
+در حال polling باشد؛ هر اجرا تا نزدیک سقف ۶ ساعتی Actions زنده می‌ماند و بعد اجرای بعدی
+از صف ادامه می‌دهد — یعنی بات تقریباً ۲۴/۷ کار می‌کند.
+
+چون runner بین اجراها پاک می‌شود، فایل SQLite محلی نمی‌تواند دیتابیس اصلی باشد؛ باید
+`TURSO_DATABASE_URL` و `TURSO_AUTH_TOKEN` تنظیم شوند تا `db.py` به‌جای فایل محلی از
+[Turso](https://turso.tech) (سرویس رایگان libSQL) استفاده کند. راه‌اندازی:
+
+```
+turso auth login
+turso db create powermatch
+turso db show powermatch --url
+turso db tokens create powermatch
+```
+
+سپس در ریپوی گیت‌هاب (خصوصی)، زیر Settings → Secrets and variables → Actions این
+مقادیر را اضافه کنید: `TELEGRAM_BOT_TOKEN`, `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` و
+هر کدام از بقیه‌ی متغیرهای بالا که نیاز دارید (برای Google Sheets، محتوای فایل JSON را
+در سیکرت `GOOGLE_CREDENTIALS_JSON` بگذارید). با `workflow_dispatch` هم می‌توانید بات را
+دستی از تب Actions اجرا کنید.
 
 ## پنل ادمین — فضای اختصاصی
 پنل مدیریت از فضای کاربری جداست:
