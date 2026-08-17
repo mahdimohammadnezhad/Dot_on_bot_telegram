@@ -1,0 +1,25 @@
+[Unit]
+Description=PowerMatch Telegram Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=powermatch
+WorkingDirectory=/opt/powermatch
+EnvironmentFile=/opt/powermatch/.env
+ExecStart=/opt/powermatch/venv/bin/python -m app.main
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# سخت‌سازی: سرویس فقط به پوشه‌ی خودش دسترسی نوشتن دارد
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/powermatch
+
+[Install]
+WantedBy=multi-user.target

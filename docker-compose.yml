@@ -1,0 +1,11 @@
+services:
+  powermatch:
+    build: .
+    env_file:
+      - .env
+    environment:
+      API_HOST: "0.0.0.0"
+    ports:
+      - "127.0.0.1:8000:8000"   # API مدیریتی فقط روی لوکال‌هاست میزبان منتشر می‌شود
+    volumes:
+      - ./data:/app/data

@@ -1,0 +1,10 @@
+aiogram>=3.20,<4
+fastapi>=0.115,<1
+uvicorn[standard]>=0.34,<1
+python-dotenv>=1.1,<2
+jdatetime>=5.0,<7
+openpyxl>=3.1,<4
+tzdata>=2024.1
+gspread>=6.1,<7
+google-auth>=2.30,<3
+libsql-client>=0.3,<1

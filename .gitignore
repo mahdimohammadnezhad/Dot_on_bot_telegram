@@ -1,0 +1,11 @@
+.env
+*.db
+*.db.bak*
+google_credentials.json
+*.json.key
+__pycache__/
+*.pyc
+.pytest_cache/
+~$*
+venv/
+.claude/
