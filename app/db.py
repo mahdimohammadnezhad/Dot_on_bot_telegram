@@ -37,30 +37,31 @@ class _TursoCursor:
 
 
 class _TursoConn:
-    """پوششی روی یک تراکنش libsql که رفتار sqlite3.Connection مورد استفاده‌ی این پروژه
+    """پوششی روی کلاینت libsql که رفتار sqlite3.Connection مورد استفاده‌ی این پروژه
     (execute/executescript/commit/close) را روی دیتابیس Turso شبیه‌سازی می‌کند؛ چون فایل
-    SQLite محلی بین اجراهای runner در GitHub Actions ماندگار نیست."""
+    SQLite محلی بین اجراهای runner در GitHub Actions ماندگار نیست.
+
+    کلاینت HTTP (که به‌خاطر شکست هندشیک وب‌ساکت روی GitHub Actions انتخاب شده) از
+    تراکنش چندمرحله‌ای پشتیبانی نمی‌کند؛ هر execute مستقل و خودش atomically commit
+    می‌شود. commit/close برای این پروژه فقط no-op هستند (سازگار با الگوی sqlite3 قبلی)."""
 
     def __init__(self, client):
-        self._tx = client.transaction()
+        self._client = client
 
     def execute(self, sql, params=()):
-        return _TursoCursor(self._tx.execute(sql, list(params)))
+        return _TursoCursor(self._client.execute(sql, list(params)))
 
     def executescript(self, script):
         for stmt in script.split(";"):
             stmt = stmt.strip()
             if stmt:
-                self._tx.execute(stmt)
+                self._client.execute(stmt)
 
     def commit(self):
-        self._tx.commit()
+        pass
 
     def close(self):
-        try:
-            self._tx.close()
-        except Exception:
-            pass
+        pass
 
 
 def _turso_client_singleton():
