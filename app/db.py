@@ -67,8 +67,13 @@ def _turso_client_singleton():
     global _turso_client
     if _turso_client is None:
         import libsql_client
-        _turso_client = libsql_client.create_client_sync(
-            url=settings.turso_database_url, auth_token=settings.turso_auth_token)
+        # libsql:// یعنی اتصال روی وب‌ساکت (wss)؛ روی runner های GitHub Actions هندشیک آن
+        # با خطای ۴۰۰ شکست می‌خورد، پس آدرس را به https تبدیل می‌کنیم (کلاینت HTTP ساده،
+        # بدون اتصال دائمی، برای این کاربرد کاملاً معادل و پایدارتر است).
+        url = settings.turso_database_url
+        if url.startswith("libsql://"):
+            url = "https://" + url[len("libsql://"):]
+        _turso_client = libsql_client.create_client_sync(url=url, auth_token=settings.turso_auth_token)
     return _turso_client
 
 
